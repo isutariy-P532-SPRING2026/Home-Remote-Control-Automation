@@ -1,0 +1,208 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="HomeAutomation.MainWindow"
+        Title="Home Automation Remote Control"
+        Width="860" Height="660"
+        MinWidth="700" MinHeight="560"
+        Background="#1A1A2E"
+        WindowStartupLocation="CenterScreen">
+
+  <Window.Styles>
+    <!-- Slot row style -->
+    <Style Selector="Border.slotRow">
+      <Setter Property="Background" Value="#1E3A5F"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Margin" Value="0,4"/>
+      <Setter Property="Padding" Value="10,6"/>
+    </Style>
+    <!-- ON button -->
+    <Style Selector="Button.btnOn">
+      <Setter Property="Background" Value="#27AE60"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="Width" Value="52"/>
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="CornerRadius" Value="17"/>
+      <Setter Property="Margin" Value="5,0"/>
+    </Style>
+    <Style Selector="Button.btnOn:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#2ECC71"/>
+    </Style>
+    <!-- OFF button -->
+    <Style Selector="Button.btnOff">
+      <Setter Property="Background" Value="#E74C3C"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="Width" Value="52"/>
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="CornerRadius" Value="17"/>
+      <Setter Property="Margin" Value="5,0"/>
+    </Style>
+    <Style Selector="Button.btnOff:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#C0392B"/>
+    </Style>
+    <!-- ComboBox -->
+    <Style Selector="ComboBox.devicePicker">
+      <Setter Property="Background" Value="#0D2137"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="BorderBrush" Value="#3498DB"/>
+      <Setter Property="MinWidth" Value="170"/>
+    </Style>
+    <!-- Log text -->
+    <Style Selector="TextBlock.logEntry">
+      <Setter Property="FontFamily" Value="Consolas,Courier New,monospace"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Foreground" Value="#A8D8EA"/>
+      <Setter Property="Margin" Value="0,2"/>
+    </Style>
+  </Window.Styles>
+
+  <Grid ColumnDefinitions="380,*" Margin="16">
+
+    <!-- ══════════════════════════════════════════
+         LEFT: Remote Control Body
+    ═══════════════════════════════════════════ -->
+    <Border Grid.Column="0"
+            Background="#0D2137"
+            CornerRadius="24"
+            Padding="18,20"
+            Margin="0,0,10,0"
+            BoxShadow="0 4 20 0 #000000AA">
+
+      <StackPanel Spacing="6">
+
+        <!-- Header -->
+        <TextBlock Text="🏠 HOME REMOTE"
+                   Foreground="White"
+                   FontSize="17"
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,4"/>
+
+        <TextBlock Text="7 programmable slots"
+                   Foreground="#7FB3D3"
+                   FontSize="11"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,12"/>
+
+        <!-- Slot column headers -->
+        <Grid ColumnDefinitions="26,*,58,58" Margin="10,0">
+          <TextBlock Grid.Column="0" Text="#"       Foreground="#7FB3D3" FontSize="11"/>
+          <TextBlock Grid.Column="1" Text="Device"  Foreground="#7FB3D3" FontSize="11" Margin="8,0"/>
+          <TextBlock Grid.Column="2" Text="ON"      Foreground="#27AE60" FontSize="11" HorizontalAlignment="Center"/>
+          <TextBlock Grid.Column="3" Text="OFF"     Foreground="#E74C3C" FontSize="11" HorizontalAlignment="Center"/>
+        </Grid>
+
+        <!-- ─── SLOT 0 ─── -->
+        <Border Classes="slotRow">
+          <Grid ColumnDefinitions="26,*,Auto,Auto">
+            <TextBlock Grid.Column="0" Text="1" Foreground="#7FB3D3" FontWeight="Bold" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Classes="devicePicker" x:Name="Slot0" SelectionChanged="SlotChanged" Tag="0" Margin="4,0"/>
+            <Button   Grid.Column="2" Classes="btnOn"  Click="OnPressed"  Tag="0" Content="ON"/>
+            <Button   Grid.Column="3" Classes="btnOff" Click="OffPressed" Tag="0" Content="OFF"/>
+          </Grid>
+        </Border>
+
+        <!-- ─── SLOT 1 ─── -->
+        <Border Classes="slotRow">
+          <Grid ColumnDefinitions="26,*,Auto,Auto">
+            <TextBlock Grid.Column="0" Text="2" Foreground="#7FB3D3" FontWeight="Bold" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Classes="devicePicker" x:Name="Slot1" SelectionChanged="SlotChanged" Tag="1" Margin="4,0"/>
+            <Button   Grid.Column="2" Classes="btnOn"  Click="OnPressed"  Tag="1" Content="ON"/>
+            <Button   Grid.Column="3" Classes="btnOff" Click="OffPressed" Tag="1" Content="OFF"/>
+          </Grid>
+        </Border>
+
+        <!-- ─── SLOT 2 ─── -->
+        <Border Classes="slotRow">
+          <Grid ColumnDefinitions="26,*,Auto,Auto">
+            <TextBlock Grid.Column="0" Text="3" Foreground="#7FB3D3" FontWeight="Bold" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Classes="devicePicker" x:Name="Slot2" SelectionChanged="SlotChanged" Tag="2" Margin="4,0"/>
+            <Button   Grid.Column="2" Classes="btnOn"  Click="OnPressed"  Tag="2" Content="ON"/>
+            <Button   Grid.Column="3" Classes="btnOff" Click="OffPressed" Tag="2" Content="OFF"/>
+          </Grid>
+        </Border>
+
+        <!-- ─── SLOT 3 ─── -->
+        <Border Classes="slotRow">
+          <Grid ColumnDefinitions="26,*,Auto,Auto">
+            <TextBlock Grid.Column="0" Text="4" Foreground="#7FB3D3" FontWeight="Bold" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Classes="devicePicker" x:Name="Slot3" SelectionChanged="SlotChanged" Tag="3" Margin="4,0"/>
+            <Button   Grid.Column="2" Classes="btnOn"  Click="OnPressed"  Tag="3" Content="ON"/>
+            <Button   Grid.Column="3" Classes="btnOff" Click="OffPressed" Tag="3" Content="OFF"/>
+          </Grid>
+        </Border>
+
+        <!-- ─── SLOT 4 ─── -->
+        <Border Classes="slotRow">
+          <Grid ColumnDefinitions="26,*,Auto,Auto">
+            <TextBlock Grid.Column="0" Text="5" Foreground="#7FB3D3" FontWeight="Bold" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Classes="devicePicker" x:Name="Slot4" SelectionChanged="SlotChanged" Tag="4" Margin="4,0"/>
+            <Button   Grid.Column="2" Classes="btnOn"  Click="OnPressed"  Tag="4" Content="ON"/>
+            <Button   Grid.Column="3" Classes="btnOff" Click="OffPressed" Tag="4" Content="OFF"/>
+          </Grid>
+        </Border>
+
+        <!-- ─── SLOT 5 ─── -->
+        <Border Classes="slotRow">
+          <Grid ColumnDefinitions="26,*,Auto,Auto">
+            <TextBlock Grid.Column="0" Text="6" Foreground="#7FB3D3" FontWeight="Bold" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Classes="devicePicker" x:Name="Slot5" SelectionChanged="SlotChanged" Tag="5" Margin="4,0"/>
+            <Button   Grid.Column="2" Classes="btnOn"  Click="OnPressed"  Tag="5" Content="ON"/>
+            <Button   Grid.Column="3" Classes="btnOff" Click="OffPressed" Tag="5" Content="OFF"/>
+          </Grid>
+        </Border>
+
+        <!-- ─── SLOT 6 ─── -->
+        <Border Classes="slotRow">
+          <Grid ColumnDefinitions="26,*,Auto,Auto">
+            <TextBlock Grid.Column="0" Text="7" Foreground="#7FB3D3" FontWeight="Bold" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Classes="devicePicker" x:Name="Slot6" SelectionChanged="SlotChanged" Tag="6" Margin="4,0"/>
+            <Button   Grid.Column="2" Classes="btnOn"  Click="OnPressed"  Tag="6" Content="ON"/>
+            <Button   Grid.Column="3" Classes="btnOff" Click="OffPressed" Tag="6" Content="OFF"/>
+          </Grid>
+        </Border>
+
+        <!-- ─── UNDO ─── -->
+        <Border Background="#2C1654" CornerRadius="12" Padding="0,10" Margin="0,16,0,0">
+          <Button x:Name="UndoBtn"
+                  Content="↩  UNDO LAST"
+                  Click="UndoPressed"
+                  HorizontalAlignment="Center"
+                  Background="#8E44AD"
+                  Foreground="White"
+                  FontWeight="Bold"
+                  FontSize="14"
+                  Width="180"
+                  Height="40"
+                  CornerRadius="20"/>
+        </Border>
+
+      </StackPanel>
+    </Border>
+
+    <!-- ══════════════════════════════════════════
+         RIGHT: Activity Log
+    ═══════════════════════════════════════════ -->
+    <Border Grid.Column="1"
+            Background="#0A0A1A"
+            CornerRadius="16"
+            Padding="16"
+            BoxShadow="0 4 20 0 #000000AA">
+      <StackPanel>
+        <TextBlock Text="📋 Activity Log"
+                   Foreground="White"
+                   FontSize="15"
+                   FontWeight="Bold"
+                   Margin="0,0,0,12"/>
+
+        <ScrollViewer x:Name="LogScroll"
+                      Height="530"
+                      VerticalScrollBarVisibility="Auto">
+          <StackPanel x:Name="LogPanel" Spacing="2"/>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
+
+  </Grid>
+</Window>
