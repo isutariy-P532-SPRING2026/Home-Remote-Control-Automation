@@ -3,44 +3,80 @@ using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using HomeAutomation.Commands;
 using HomeAutomation.Devices;
 
 namespace HomeAutomation;
 
 public partial class MainWindow : Window
 {
-    // ── All available devices ─────────────────────────────────────
-    private readonly List<IDevice> _allDevices;
+    // ── One instance of every device ─────────────────────────────
+    private readonly Light           _light           = new();
+    private readonly CeilingLight    _ceilingLight    = new();
+    private readonly OutdoorLight    _outdoorLight    = new();
+    private readonly GardenLight     _gardenLight     = new();
+    private readonly TV              _tv              = new();
+    private readonly Stereo          _stereo          = new();
+    private readonly CeilingFan      _ceilingFan      = new();
+    private readonly GarageDoor      _garageDoor      = new();
+    private readonly Hottub          _hottub          = new();
+    private readonly FaucetControl   _faucet          = new();
+    private readonly Thermostat      _thermostat      = new();
+    private readonly SecurityControl _security        = new();
+    private readonly Sprinkler       _sprinkler       = new();
+
+    // ── Device display names (must match index order below) ──────
+    private readonly List<string> _deviceNames;
+
+    // ── ON / OFF command pairs per device (index matches name list)
+    private readonly List<(ICommand On, ICommand Off)> _commandPairs;
 
     // ── The remote ───────────────────────────────────────────────
     private readonly RemoteControl _remote = new();
 
-    // ── The 7 ComboBoxes (one per slot) ──────────────────────────
+    // ── The 7 ComboBoxes ─────────────────────────────────────────
     private ComboBox[] _slotBoxes = null!;
 
     public MainWindow()
     {
         InitializeComponent();
 
-        // Build the device catalogue
-        _allDevices = new List<IDevice>
+        // Build command pairs — exactly mirrors the Java sample style
+        _deviceNames = new List<string>
         {
-            new Light(),
-            new CeilingLight(),
-            new OutdoorLight(),
-            new GardenLight(),
-            new TV(),
-            new Stereo(),
-            new CeilingFan(),
-            new GarageDoor(),
-            new Hottub(),
-            new FaucetControl(),
-            new Thermostat(),
-            new SecurityControl(),
-            new Sprinkler()
+            "Light",
+            "Ceiling Light",
+            "Outdoor Light",
+            "Garden Light",
+            "TV",
+            "Stereo",
+            "Ceiling Fan",
+            "Garage Door",
+            "Hot Tub",
+            "Faucet",
+            "Thermostat",
+            "Security",
+            "Sprinkler"
         };
 
-        // Grab all slot ComboBoxes
+        _commandPairs = new List<(ICommand, ICommand)>
+        {
+            (new LightOnCommand(_light),              new LightOffCommand(_light)),
+            (new CeilingLightOnCommand(_ceilingLight),new CeilingLightOffCommand(_ceilingLight)),
+            (new OutdoorLightOnCommand(_outdoorLight),new OutdoorLightOffCommand(_outdoorLight)),
+            (new GardenLightOnCommand(_gardenLight),  new GardenLightOffCommand(_gardenLight)),
+            (new TVOnCommand(_tv),                    new TVOffCommand(_tv)),
+            (new StereoOnCommand(_stereo),            new StereoOffCommand(_stereo)),
+            (new CeilingFanOnCommand(_ceilingFan),    new CeilingFanOffCommand(_ceilingFan)),
+            (new GarageDoorOpenCommand(_garageDoor),  new GarageDoorCloseCommand(_garageDoor)),
+            (new HottubOnCommand(_hottub),            new HottubOffCommand(_hottub)),
+            (new FaucetOnCommand(_faucet),            new FaucetOffCommand(_faucet)),
+            (new ThermostatOnCommand(_thermostat),    new ThermostatOffCommand(_thermostat)),
+            (new SecurityArmCommand(_security),       new SecurityDisarmCommand(_security)),
+            (new SprinklerOnCommand(_sprinkler),      new SprinklerOffCommand(_sprinkler))
+        };
+
+        // Grab ComboBoxes
         _slotBoxes = new[]
         {
             this.FindControl<ComboBox>("Slot0")!,
@@ -52,28 +88,28 @@ public partial class MainWindow : Window
             this.FindControl<ComboBox>("Slot6")!
         };
 
-        // Populate each ComboBox with "(empty)" + all devices
+        // Populate ComboBoxes
+        var items = new List<string> { "— empty —" };
+        items.AddRange(_deviceNames);
         foreach (var cb in _slotBoxes)
         {
-            var items = new List<string> { "— empty —" };
-            foreach (var d in _allDevices) items.Add(d.Name);
             cb.ItemsSource = items;
             cb.SelectedIndex = 0;
         }
 
-        // Pre-assign sensible defaults to first 7 slots
         SetDefaultDevices();
-
-        Log("Remote ready — assign devices and press ON / OFF.", "#7FB3D3");
+        Log("Remote ready — Command pattern active.", "#7FB3D3");
     }
 
-    // ── Pre-assign the first 7 devices to the 7 slots ─────────────
+    // ── Pre-assign first 7 devices to slots ──────────────────────
     private void SetDefaultDevices()
     {
-        for (int i = 0; i < RemoteControl.SlotCount && i < _allDevices.Count; i++)
+        for (int i = 0; i < RemoteControl.SlotCount && i < _commandPairs.Count; i++)
         {
-            _slotBoxes[i].SelectedIndex = i + 1;          // skip "— empty —"
-            _remote.SetDevice(i, _allDevices[i]);
+            _slotBoxes[i].SelectedIndex = i + 1;
+            var (on, off) = _commandPairs[i];
+            _remote.SetCommand(i, on, off);
+            Log($"Slot {i + 1}: assigned → {_deviceNames[i]}", "#BDC3C7");
         }
     }
 
@@ -82,63 +118,60 @@ public partial class MainWindow : Window
     {
         if (sender is not ComboBox cb) return;
         int slot = int.Parse(cb.Tag?.ToString() ?? "0");
-        int idx  = cb.SelectedIndex - 1;                  // -1 = "empty"
+        int idx  = cb.SelectedIndex - 1;   // -1 = "empty"
 
-        IDevice? device = (idx >= 0 && idx < _allDevices.Count) ? _allDevices[idx] : null;
-        _remote.SetDevice(slot, device);
-
-        var msg = device == null
-            ? $"Slot {slot + 1}: cleared"
-            : $"Slot {slot + 1}: assigned → {device.Name}";
-        Log(msg, "#BDC3C7");
+        if (idx < 0 || idx >= _commandPairs.Count)
+        {
+            _remote.ClearSlot(slot);
+            Log($"Slot {slot + 1}: cleared", "#BDC3C7");
+        }
+        else
+        {
+            var (on, off) = _commandPairs[idx];
+            _remote.SetCommand(slot, on, off);
+            Log($"Slot {slot + 1}: assigned → {_deviceNames[idx]}", "#BDC3C7");
+        }
     }
 
     // ── ON button ─────────────────────────────────────────────────
     public void OnPressed(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button btn) return;
-        int slot = int.Parse(btn.Tag?.ToString() ?? "0");
-        string result = _remote.PressOn(slot);
-        Log(result, "#2ECC71");
+        int slot   = int.Parse(btn.Tag?.ToString() ?? "0");
+        string msg = _remote.PressOn(slot);
+        Log(msg, "#2ECC71");
     }
 
     // ── OFF button ────────────────────────────────────────────────
     public void OffPressed(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button btn) return;
-        int slot = int.Parse(btn.Tag?.ToString() ?? "0");
-        string result = _remote.PressOff(slot);
-        Log(result, "#E74C3C");
+        int slot   = int.Parse(btn.Tag?.ToString() ?? "0");
+        string msg = _remote.PressOff(slot);
+        Log(msg, "#E74C3C");
     }
 
     // ── UNDO button ───────────────────────────────────────────────
     public void UndoPressed(object? sender, RoutedEventArgs e)
     {
-        string result = _remote.PressUndo();
-        Log(result, "#9B59B6");
+        string msg = _remote.PressUndo();
+        Log(msg, "#9B59B6");
     }
 
-    // ── Append a line to the activity log ─────────────────────────
+    // ── Activity log ──────────────────────────────────────────────
     private void Log(string message, string hex = "#A8D8EA")
     {
         var panel  = this.FindControl<StackPanel>("LogPanel")!;
-        var scroll = this.FindControl<ScrollViewer>("LogScroll")!;
-
-        string timestamp = DateTime.Now.ToString("HH:mm:ss");
-
         var tb = new TextBlock
         {
-            Text       = $"[{timestamp}]  {message}",
-            Foreground = new SolidColorBrush(Color.Parse(hex)),
-            FontFamily = new FontFamily("Consolas,Courier New,Monospace"),
-            FontSize   = 12,
-            Margin     = new Avalonia.Thickness(0, 2),
+            Text         = $"[{DateTime.Now:HH:mm:ss}]  {message}",
+            Foreground   = new SolidColorBrush(Color.Parse(hex)),
+            FontFamily   = new FontFamily("Consolas,Courier New,Monospace"),
+            FontSize     = 12,
+            Margin       = new Avalonia.Thickness(0, 2),
             TextWrapping = Avalonia.Media.TextWrapping.Wrap
         };
-
-        panel.Children.Insert(0, tb);   // newest at top
-
-        // Keep log from growing forever
+        panel.Children.Insert(0, tb);
         while (panel.Children.Count > 200)
             panel.Children.RemoveAt(panel.Children.Count - 1);
     }
